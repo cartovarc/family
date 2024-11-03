@@ -43,12 +43,8 @@
 - **Map Settings**: Adjust the map's `center` and `zoom` levels to tailor the initial display.
 
 ## Future Enhancements
-- Include more interactive features, such as a gallery view or travel story snippets.
-- Add animations or transitions for a richer user experience.
-- Integrate a search bar for users to locate specific countries or cities on the map.
+- Add markers for visited cities to display pictures for each city.
 
-## Screenshots
-![Screenshot of the interactive map](https://raw.githubusercontent.com/cartovarc/family/refs/heads/main/static/screenshots/map-preview.png)
 
 ## License
 This project is licensed under the MIT License. Feel free to use and modify it for personal projects.
