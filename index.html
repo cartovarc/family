@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>My Family Adventures</title>
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <!-- Include Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Include Mapbox GL CSS -->
+    <link href='https://api.mapbox.com/mapbox-gl-js/v2.14.1/mapbox-gl.css' rel='stylesheet' />
+    <!-- Custom CSS -->
+    <style>
+        body { margin:0; padding:0; }
+        #map { position:absolute; top:0; bottom:0; width:100%; }
+        /* Adjust the modal dialog */
+        .modal-dialog {
+            max-width: 30%;
+        }
+    </style>
+</head>
+<body>
+    <!-- Map container -->
+    <div id="map"></div>
+
+    <!-- Modal -->
+    <div class="modal fade" id="myModal" tabindex="-1" aria-labelledby="modalTitle" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <!-- Bootstrap Card -->
+          <div class="card">
+            <img id="modal-image" src="" class="card-img-top" alt="Country Image">
+            <div class="card-body text-center">
+              <h5 id="modal-title" class="card-title"></h5>
+              <p id="modal-date" class="card-subtitle mb-2 text-muted"></p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Include Mapbox GL JS -->
+    <script src="https://api.mapbox.com/mapbox-gl-js/v2.14.1/mapbox-gl.js"></script>
+    <!-- Include Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Your JavaScript code -->
+    <script>
+        mapboxgl.accessToken = 'pk.eyJ1IjoiY2FydG92YXJjIiwiYSI6ImNtMzFmbjk5eDEyejEybnNjMHE5cmxveHYifQ.1gEsx1CgGmKucJB7YS26UA';
+
+        // Data for visited countries
+        const visitedCountries = [
+            {
+                isoCode: 'COL',
+                city: 'Cali',
+                date: 'October 2022',
+                title: 'San Antonio, Cali',
+                imageUrl: 'https://raw.githubusercontent.com/cartovarc/family/refs/heads/main/static/pictures/colombia.jpeg',
+                flagIcon: 'https://flagcdn.com/w40/co.png',
+                coordinates: [-76.5315, 3.4516]
+            },
+            {
+                isoCode: 'PAN',
+                city: 'Panama City',
+                date: 'October 2022',
+                title: 'Canal de Panamá, Panama City',
+                imageUrl: 'https://raw.githubusercontent.com/cartovarc/family/refs/heads/main/static/pictures/panama.jpeg',
+                flagIcon: 'https://flagcdn.com/w40/pa.png',
+                coordinates: [-79.9526, 9.1016]
+            },
+            {
+                isoCode: 'ESP',
+                city: 'Alicante',
+                date: 'October 2024',
+                title: 'Castillo de Santa Bárbara, Alicante',
+                imageUrl: 'https://raw.githubusercontent.com/cartovarc/family/refs/heads/main/static/pictures/spain.jpeg',
+                flagIcon: 'https://flagcdn.com/w40/es.png',
+                coordinates: [-0.4815, 38.3452]
+            },
+            {
+                isoCode: 'GBR',
+                city: 'London',
+                date: 'February 2023',
+                title: 'London Bridge, London',
+                imageUrl: 'https://raw.githubusercontent.com/cartovarc/family/refs/heads/main/static/pictures/england.jpeg',
+                flagIcon: 'https://flagcdn.com/w40/gb.png',
+                coordinates: [-0.0877, 51.5079]
+            }
+        ];
+
+        // Initialize Bootstrap Modal
+        const modalElement = document.getElementById('myModal');
+        const modal = new bootstrap.Modal(modalElement);
+        const modalTitle = document.getElementById('modal-title');
+        const modalDate = document.getElementById('modal-date');
+        const modalImage = document.getElementById('modal-image');
+
+        // Function to show modal with country data
+        function showModal(countryData) {
+            if (!countryData) return;
+            modalTitle.innerText = countryData.title || '';
+            modalDate.innerText = countryData.date || '';
+            modalImage.src = countryData.imageUrl || '';
+            modal.show();
+        }
+
+        // Function to create a flag marker
+        function createFlagMarker(flagUrl) {
+            const img = document.createElement('img');
+            img.src = flagUrl;
+            img.style.width = '20px';
+            img.style.height = 'auto';
+            img.style.cursor = 'pointer';
+            return img;
+        }
+
+        // Function to get country data by ISO code
+        function getCountryDataByIsoCode(isoCode) {
+            return visitedCountries.find(country => country.isoCode === isoCode);
+        }
+
+        // Initialize Mapbox map
+        const map = new mapboxgl.Map({
+            container: 'map',
+            style: 'mapbox://styles/mapbox/light-v10',
+            center: [0, 20],
+            zoom: 1.5,
+            projection: 'mercator'
+        });
+
+        map.on('load', () => {
+            // Create filter for visited countries
+            const visitedIsoCodes = visitedCountries.map(country => country.isoCode);
+            const filter = ['in', 'iso_3166_1_alpha_3', ...visitedIsoCodes];
+
+            // Add country boundaries source and layer
+            map.addSource('country-boundaries', {
+                type: 'vector',
+                url: 'mapbox://mapbox.country-boundaries-v1'
+            });
+
+            map.addLayer({
+                id: 'country-borders',
+                type: 'fill',
+                source: 'country-boundaries',
+                'source-layer': 'country_boundaries',
+                paint: {
+                    'fill-color': 'rgba(144, 238, 144, 0.5)', // Pastel green with transparency
+                    'fill-outline-color': '#000000' // Black borders
+                },
+                filter: filter
+            });
+
+            // Add flag markers and click events
+            visitedCountries.forEach(country => {
+                const markerElement = createFlagMarker(country.flagIcon);
+                new mapboxgl.Marker({
+                    element: markerElement,
+                    anchor: 'bottom'
+                })
+                .setLngLat(country.coordinates)
+                .addTo(map);
+
+                // Show modal on marker click
+                markerElement.addEventListener('click', () => showModal(country));
+            });
+
+            // Map interaction events
+            map.on('click', 'country-borders', e => {
+                const isoCode = e.features[0].properties.iso_3166_1_alpha_3;
+                const countryData = getCountryDataByIsoCode(isoCode);
+                if (countryData) {
+                    showModal(countryData);
+                }
+            });
+
+            map.on('mouseenter', 'country-borders', () => {
+                map.getCanvas().style.cursor = 'pointer';
+            });
+
+            map.on('mouseleave', 'country-borders', () => {
+                map.getCanvas().style.cursor = '';
+            });
+        });
+    </script>
+</body>
+</html>
